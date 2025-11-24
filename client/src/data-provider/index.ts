@@ -6,6 +6,7 @@ export * from './Files';
 export * from './Memories';
 export * from './Messages';
 export * from './Misc';
+export * from './Organizations';
 export * from './Tools';
 export * from './connection';
 export * from './mutations';

@@ -1,4 +1,4 @@
-import { Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import { conversationPreset } from './defaults';
 import { IConversation } from '~/types';
 
@@ -39,6 +39,11 @@ const convoSchema: Schema<IConversation> = new Schema(
     },
     expiredAt: {
       type: Date,
+    },
+    orgId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
+      index: true,
     },
   },
   { timestamps: true },

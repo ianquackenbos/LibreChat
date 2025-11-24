@@ -36,6 +36,13 @@ const toggleSwitchConfigs = [
     hoverCardText: undefined,
     key: 'keepScreenAwake',
   },
+  {
+    stateAtom: store.developMode,
+    localizationKey: 'com_nav_develop_mode',
+    switchId: 'developMode',
+    hoverCardText: undefined,
+    key: 'developMode',
+  },
 ];
 
 export const ThemeSelector = ({

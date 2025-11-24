@@ -385,3 +385,13 @@ export const getEffectivePermissions = (resourceType: ResourceType, resourceId: 
 // SharePoint Graph API Token
 export const graphToken = (scopes: string) =>
   `${BASE_URL}/api/auth/graph-token?scopes=${encodeURIComponent(scopes)}`;
+
+// Improve Prompt
+export const improvePrompt = () => `${BASE_URL}/api/improve-prompt`;
+
+// Organizations
+export const organizations = () => `${BASE_URL}/api/organizations`;
+export const currentOrganization = () => `${BASE_URL}/api/organizations/current`;
+export const updateOrganization = (id: string) => `${organizations()}/${id}`;
+export const organizationSSOStart = (id: string) => `${organizations()}/sso/${id}/start`;
+export const organizationSSOAdminPortal = (id: string) => `${organizations()}/sso/${id}/admin-portal`;

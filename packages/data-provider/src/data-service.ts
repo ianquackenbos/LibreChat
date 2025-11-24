@@ -965,3 +965,69 @@ export function getGraphApiToken(params: q.GraphTokenParams): Promise<q.GraphTok
 export function getDomainServerBaseUrl(): string {
   return `${endpoints.apiBaseUrl()}/api`;
 }
+
+// Improve Prompt
+export function improvePrompt(payload: {
+  text: string;
+  endpoint: string;
+  model?: string;
+  conversationId?: string | null;
+}): Promise<{ improvedText: string }> {
+  return request.post(endpoints.improvePrompt(), payload);
+}
+
+// Organizations
+export function createOrganization(payload: {
+  name: string;
+  members: Array<{
+    email: string;
+    role: 'user' | 'administrator';
+  }>;
+}): Promise<{
+  organization: {
+    id: string;
+    name: string;
+    ssoConnectionId?: string;
+    verifiedDomains?: string[];
+    createdAt: string;
+    updatedAt: string;
+  };
+}> {
+  return request.post(endpoints.organizations(), payload);
+}
+
+export function getCurrentOrganization(): Promise<{
+  id: string;
+  name: string;
+  ssoConnectionId?: string;
+  verifiedDomains?: string[];
+  createdAt: string;
+  updatedAt: string;
+} | null> {
+  return request.get(endpoints.currentOrganization());
+}
+
+export function updateOrganization(payload: {
+  id: string;
+  name?: string;
+  ssoConnectionId?: string | null;
+  verifiedDomains?: string[];
+}): Promise<{
+  organization: {
+    id: string;
+    name: string;
+    ssoConnectionId?: string;
+    verifiedDomains?: string[];
+    createdAt: string;
+    updatedAt: string;
+  };
+}> {
+  const { id, ...updateData } = payload;
+  return request.put(endpoints.updateOrganization(id), updateData);
+}
+
+export function getOrganizationSSOAdminPortal(id: string): Promise<{
+  adminPortalLink: string;
+}> {
+  return request.get(endpoints.organizationSSOAdminPortal(id));
+}

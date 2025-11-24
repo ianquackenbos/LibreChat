@@ -57,6 +57,7 @@ export enum QueryKeys {
   resourcePermissions = 'resourcePermissions',
   effectivePermissions = 'effectivePermissions',
   graphToken = 'graphToken',
+  currentOrganization = 'currentOrganization',
 }
 
 // Dynamic query keys that require parameters
@@ -87,4 +88,6 @@ export enum MutationKeys {
   enableTwoFactor = 'enableTwoFactor',
   verifyTwoFactor = 'verifyTwoFactor',
   updateMemoryPreferences = 'updateMemoryPreferences',
+  improvePrompt = 'improvePrompt',
+  createOrganization = 'createOrganization',
 }

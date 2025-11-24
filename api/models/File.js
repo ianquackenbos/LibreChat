@@ -1,6 +1,7 @@
 const { logger } = require('@librechat/data-schemas');
 const { EToolResources, FileContext } = require('librechat-data-provider');
 const { File } = require('~/db/models');
+const { addOrgScope } = require('./helpers/orgScope');
 
 /**
  * Finds a file by its file_id with additional query options.
@@ -8,8 +9,9 @@ const { File } = require('~/db/models');
  * @param {object} options - Query options for filtering, projection, etc.
  * @returns {Promise<MongoFile>} A promise that resolves to the file document or null.
  */
-const findFileById = async (file_id, options = {}) => {
-  return await File.findOne({ file_id, ...options }).lean();
+const findFileById = async (file_id, options = {}, orgId = null) => {
+  const filter = addOrgScope({ file_id, ...options }, orgId);
+  return await File.findOne(filter).lean();
 };
 
 /**
@@ -20,9 +22,10 @@ const findFileById = async (file_id, options = {}) => {
  *                                                   Default excludes the 'text' field.
  * @returns {Promise<Array<MongoFile>>} A promise that resolves to an array of file documents.
  */
-const getFiles = async (filter, _sortOptions, selectFields = { text: 0 }) => {
+const getFiles = async (filter, _sortOptions, selectFields = { text: 0 }, orgId = null) => {
+  const scopedFilter = addOrgScope(filter, orgId);
   const sortOptions = { updatedAt: -1, ..._sortOptions };
-  return await File.find(filter).select(selectFields).sort(sortOptions).lean();
+  return await File.find(scopedFilter).select(selectFields).sort(sortOptions).lean();
 };
 
 /**
@@ -68,17 +71,22 @@ const getToolFilesByIds = async (fileIds, toolResourceSet) => {
  * @param {boolean} disableTTL - Whether to disable the TTL.
  * @returns {Promise<MongoFile>} A promise that resolves to the created file document.
  */
-const createFile = async (data, disableTTL) => {
+const createFile = async (data, disableTTL, orgId = null) => {
   const fileData = {
     ...data,
     expiresAt: new Date(Date.now() + 3600 * 1000),
   };
 
+  if (orgId) {
+    fileData.orgId = typeof orgId === 'string' ? require('mongoose').Types.ObjectId(orgId) : orgId;
+  }
+
   if (disableTTL) {
     delete fileData.expiresAt;
   }
 
-  return await File.findOneAndUpdate({ file_id: data.file_id }, fileData, {
+  const filter = addOrgScope({ file_id: data.file_id }, orgId);
+  return await File.findOneAndUpdate(filter, fileData, {
     new: true,
     upsert: true,
   }).lean();
@@ -135,12 +143,13 @@ const deleteFileByFilter = async (filter) => {
  * @param {Array<string>} file_ids - The unique identifiers of the files to delete.
  * @returns {Promise<Object>} A promise that resolves to the result of the deletion operation.
  */
-const deleteFiles = async (file_ids, user) => {
+const deleteFiles = async (file_ids, user, orgId = null) => {
   let deleteQuery = { file_id: { $in: file_ids } };
   if (user) {
-    deleteQuery = { user: user };
+    deleteQuery.user = user;
   }
-  return await File.deleteMany(deleteQuery);
+  const scopedQuery = addOrgScope(deleteQuery, orgId);
+  return await File.deleteMany(scopedQuery);
 };
 
 /**

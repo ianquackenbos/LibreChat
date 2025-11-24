@@ -2,6 +2,7 @@ const { logger } = require('@librechat/data-schemas');
 const { createTempChatExpirationDate } = require('@librechat/api');
 const { getMessages, deleteMessages } = require('./Message');
 const { Conversation } = require('~/db/models');
+const { addOrgScope, addOrgScopeToUpdate } = require('./helpers/orgScope');
 
 /**
  * Searches for a conversation by conversationId and returns a lean document with only conversationId and user.
@@ -23,9 +24,10 @@ const searchConversation = async (conversationId) => {
  * @param {string} conversationId - The conversation's ID.
  * @returns {Promise<TConversation>} The conversation object.
  */
-const getConvo = async (user, conversationId) => {
+const getConvo = async (user, conversationId, orgId = null) => {
   try {
-    return await Conversation.findOne({ user, conversationId }).lean();
+    const filter = addOrgScope({ user, conversationId }, orgId);
+    return await Conversation.findOne(filter).lean();
   } catch (error) {
     logger.error('[getConvo] Error getting single conversation', error);
     return { message: 'Error getting single conversation' };
@@ -95,6 +97,11 @@ module.exports = {
       const messages = await getMessages({ conversationId }, '_id');
       const update = { ...convo, messages, user: req.user.id };
 
+      // Add orgId if available
+      if (req.orgId) {
+        update.orgId = req.orgId;
+      }
+
       if (newConversationId) {
         update.conversationId = newConversationId;
       }
@@ -119,8 +126,9 @@ module.exports = {
       }
 
       /** Note: the resulting Model object is necessary for Meilisearch operations */
+      const filter = addOrgScope({ conversationId, user: req.user.id }, req.orgId);
       const conversation = await Conversation.findOneAndUpdate(
-        { conversationId, user: req.user.id },
+        filter,
         updateOperation,
         {
           new: true,
@@ -157,9 +165,9 @@ module.exports = {
   },
   getConvosByCursor: async (
     user,
-    { cursor, limit = 25, isArchived = false, tags, search, order = 'desc' } = {},
+    { cursor, limit = 25, isArchived = false, tags, search, order = 'desc', orgId = null } = {},
   ) => {
-    const filters = [{ user }];
+    const filters = [addOrgScope({ user }, orgId)];
     if (isArchived) {
       filters.push({ isArchived: true });
     } else {
@@ -215,7 +223,7 @@ module.exports = {
       return { message: 'Error getting conversations' };
     }
   },
-  getConvosQueried: async (user, convoIds, cursor = null, limit = 25) => {
+  getConvosQueried: async (user, convoIds, cursor = null, limit = 25, orgId = null) => {
     try {
       if (!convoIds?.length) {
         return { conversations: [], nextCursor: null, convoMap: {} };
@@ -223,11 +231,14 @@ module.exports = {
 
       const conversationIds = convoIds.map((convo) => convo.conversationId);
 
-      const results = await Conversation.find({
+      const baseFilter = {
         user,
         conversationId: { $in: conversationIds },
         $or: [{ expiredAt: { $exists: false } }, { expiredAt: null }],
-      }).lean();
+      };
+      const filter = addOrgScope(baseFilter, orgId);
+
+      const results = await Conversation.find(filter).lean();
 
       results.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
@@ -289,9 +300,10 @@ module.exports = {
    * const result = await deleteConvos(user, filter);
    * logger.error(result); // { n: 5, ok: 1, deletedCount: 5, messages: { n: 10, ok: 1, deletedCount: 10 } }
    */
-  deleteConvos: async (user, filter) => {
+  deleteConvos: async (user, filter, orgId = null) => {
     try {
-      const userFilter = { ...filter, user };
+      const baseFilter = { ...filter, user };
+      const userFilter = addOrgScope(baseFilter, orgId);
       const conversations = await Conversation.find(userFilter).select('conversationId');
       const conversationIds = conversations.map((c) => c.conversationId);
 

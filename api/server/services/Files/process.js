@@ -490,6 +490,7 @@ const processFileUpload = async ({ req, res, metadata }) => {
       width,
     },
     true,
+    req.orgId,
   );
   res.status(200).json({ message: 'File uploaded and processed successfully', ...result });
 };
@@ -729,7 +730,7 @@ const processAgentFileUpload = async ({ req, res, metadata }) => {
     width,
   });
 
-  const result = await createFile(fileInfo, true);
+  const result = await createFile(fileInfo, true, req.orgId);
 
   res.status(200).json({ message: 'Agent file uploaded and processed successfully', ...result });
 };

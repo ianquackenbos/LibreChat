@@ -127,6 +127,7 @@ const startServer = async () => {
   app.use('/api/prompts', routes.prompts);
   app.use('/api/categories', routes.categories);
   app.use('/api/tokenizer', routes.tokenizer);
+  app.use('/api/improve-prompt', routes.improvePrompt);
   app.use('/api/endpoints', routes.endpoints);
   app.use('/api/balance', routes.balance);
   app.use('/api/models', routes.models);
@@ -144,6 +145,7 @@ const startServer = async () => {
 
   app.use('/api/tags', routes.tags);
   app.use('/api/mcp', routes.mcp);
+  app.use('/api/organizations', routes.organizations);
 
   app.use(ErrorController);
 

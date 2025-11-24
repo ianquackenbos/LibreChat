@@ -1,4 +1,4 @@
-import { Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import { SystemRoles } from 'librechat-data-provider';
 import { IUser } from '~/types';
 
@@ -145,6 +145,11 @@ const userSchema = new Schema<IUser>(
     idOnTheSource: {
       type: String,
       sparse: true,
+    },
+    defaultOrgId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
+      index: true,
     },
   },
   { timestamps: true },

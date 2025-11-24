@@ -19,6 +19,7 @@ interface BadgeRowContextType {
   artifacts: ReturnType<typeof useToolToggle>;
   fileSearch: ReturnType<typeof useToolToggle>;
   codeInterpreter: ReturnType<typeof useToolToggle>;
+  improve: ReturnType<typeof useToolToggle>;
   codeApiKeyForm: ReturnType<typeof useCodeApiKeyForm>;
   searchApiKeyForm: ReturnType<typeof useSearchApiKeyForm>;
   mcpServerManager: ReturnType<typeof useMCPServerManager>;
@@ -66,11 +67,13 @@ export default function BadgeRowProvider({
       const webSearchToggleKey = `${LocalStorageKeys.LAST_WEB_SEARCH_TOGGLE_}${key}`;
       const fileSearchToggleKey = `${LocalStorageKeys.LAST_FILE_SEARCH_TOGGLE_}${key}`;
       const artifactsToggleKey = `${LocalStorageKeys.LAST_ARTIFACTS_TOGGLE_}${key}`;
+      const improveToggleKey = `${LocalStorageKeys.LAST_IMPROVE_TOGGLE_}${key}`;
 
       const codeToggleValue = getTimestampedValue(codeToggleKey);
       const webSearchToggleValue = getTimestampedValue(webSearchToggleKey);
       const fileSearchToggleValue = getTimestampedValue(fileSearchToggleKey);
       const artifactsToggleValue = getTimestampedValue(artifactsToggleKey);
+      const improveToggleValue = getTimestampedValue(improveToggleKey);
 
       const initialValues: Record<string, any> = {};
 
@@ -106,6 +109,14 @@ export default function BadgeRowProvider({
         }
       }
 
+      if (improveToggleValue !== null) {
+        try {
+          initialValues['improve'] = JSON.parse(improveToggleValue);
+        } catch (e) {
+          console.error('Failed to parse improve toggle value:', e);
+        }
+      }
+
       /**
        * Always set values for all tools (use defaults if not in `localStorage`)
        * If `ephemeralAgent` is `null`, create a new object with just our tool values
@@ -115,6 +126,7 @@ export default function BadgeRowProvider({
         [Tools.web_search]: initialValues[Tools.web_search] ?? false,
         [Tools.file_search]: initialValues[Tools.file_search] ?? false,
         [AgentCapabilities.artifacts]: initialValues[AgentCapabilities.artifacts] ?? false,
+        improve: initialValues['improve'] ?? false,
       };
 
       setEphemeralAgent((prev) => ({
@@ -131,6 +143,8 @@ export default function BadgeRowProvider({
             storageKey = webSearchToggleKey;
           } else if (toolKey === Tools.file_search) {
             storageKey = fileSearchToggleKey;
+          } else if (toolKey === 'improve') {
+            storageKey = improveToggleKey;
           }
           // Store the value and set timestamp for existing values
           localStorage.setItem(storageKey, JSON.stringify(value));
@@ -164,6 +178,7 @@ export default function BadgeRowProvider({
     toolKey: Tools.web_search,
     localStorageKey: LocalStorageKeys.LAST_WEB_SEARCH_TOGGLE_,
     setIsDialogOpen: setWebSearchDialogOpen,
+    defaultPinned: true,
     authConfig: {
       toolId: Tools.web_search,
       queryOptions: { retry: 1 },
@@ -176,6 +191,7 @@ export default function BadgeRowProvider({
     toolKey: Tools.file_search,
     localStorageKey: LocalStorageKeys.LAST_FILE_SEARCH_TOGGLE_,
     isAuthenticated: true,
+    defaultPinned: true,
   });
 
   /** Artifacts hook - using a custom key since it's not a Tool but a capability */
@@ -186,12 +202,22 @@ export default function BadgeRowProvider({
     isAuthenticated: true,
   });
 
+  /** Improve hook */
+  const improve = useToolToggle({
+    conversationId,
+    toolKey: 'improve',
+    localStorageKey: LocalStorageKeys.LAST_IMPROVE_TOGGLE_,
+    isAuthenticated: true,
+    defaultPinned: true,
+  });
+
   const mcpServerManager = useMCPServerManager({ conversationId });
 
   const value: BadgeRowContextType = {
     webSearch,
     artifacts,
     fileSearch,
+    improve,
     agentsConfig,
     conversationId,
     codeApiKeyForm,

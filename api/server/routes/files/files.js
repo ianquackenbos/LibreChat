@@ -38,7 +38,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const appConfig = req.config;
-    const files = await getFiles({ user: req.user.id });
+    const files = await getFiles({ user: req.user.id }, null, { text: 0 }, req.orgId);
     if (appConfig.fileStrategy === FileSources.s3) {
       try {
         const cache = getLogStores(CacheKeys.S3_EXPIRY_INTERVAL);
@@ -105,7 +105,7 @@ router.get('/agent/:agent_id', async (req, res) => {
       return res.status(200).json([]);
     }
 
-    const files = await getFiles({ file_id: { $in: agentFileIds } }, null, { text: 0 });
+    const files = await getFiles({ file_id: { $in: agentFileIds } }, null, { text: 0 }, req.orgId);
 
     res.status(200).json(files);
   } catch (error) {
@@ -150,7 +150,7 @@ router.delete('/', async (req, res) => {
     }
 
     const fileIds = files.map((file) => file.file_id);
-    const dbFiles = await getFiles({ file_id: { $in: fileIds } });
+    const dbFiles = await getFiles({ file_id: { $in: fileIds } }, null, { text: 0 }, req.orgId);
 
     const ownedFiles = [];
     const nonOwnedFiles = [];

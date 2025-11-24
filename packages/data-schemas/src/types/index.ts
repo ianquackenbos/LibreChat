@@ -25,5 +25,9 @@ export * from './prompts';
 export * from './accessRole';
 export * from './aclEntry';
 export * from './group';
+/* Organizations */
+export * from './organization';
+export * from './membership';
+export * from './organizationInvite';
 /* Web */
 export * from './web';

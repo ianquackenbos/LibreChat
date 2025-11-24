@@ -11,7 +11,7 @@ const {
   deleteMessages,
 } = require('~/models');
 const { findAllArtifacts, replaceArtifactContent } = require('~/server/services/Artifacts/update');
-const { requireJwtAuth, validateMessageReq } = require('~/server/middleware');
+const { requireJwtAuth, resolveOrgId, validateMessageReq } = require('~/server/middleware');
 const { cleanUpPrimaryKeyValue } = require('~/lib/utils/misc');
 const { getConvosQueried } = require('~/models/Conversation');
 const { countTokens } = require('~/server/utils');
@@ -19,6 +19,7 @@ const { Message } = require('~/db/models');
 
 const router = express.Router();
 router.use(requireJwtAuth);
+router.use(resolveOrgId);
 
 router.get('/', async (req, res) => {
   try {
@@ -63,7 +64,7 @@ router.get('/', async (req, res) => {
 
       const messages = searchResults.hits || [];
 
-      const result = await getConvosQueried(req.user.id, messages, cursor);
+      const result = await getConvosQueried(req.user.id, messages, cursor, 25, req.orgId);
 
       const messageIds = [];
       const cleanedMessages = [];

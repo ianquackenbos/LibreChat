@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import { useRecoilValue } from 'recoil';
 import * as Ariakit from '@ariakit/react';
-import { Globe, Settings, Settings2, TerminalSquareIcon } from 'lucide-react';
+import { Globe, Settings, Settings2, TerminalSquareIcon, Wand2 } from 'lucide-react';
 import { TooltipAnchor, DropdownPopup, PinIcon, VectorIcon } from '@librechat/client';
 import type { MenuItemProps } from '~/common';
 import {
@@ -16,6 +17,7 @@ import MCPSubMenu from '~/components/Chat/Input/MCPSubMenu';
 import { useGetStartupConfig } from '~/data-provider';
 import { useBadgeRowContext } from '~/Providers';
 import { cn } from '~/utils';
+import store from '~/store';
 
 interface ToolsDropdownProps {
   disabled?: boolean;
@@ -25,10 +27,12 @@ const ToolsDropdown = ({ disabled }: ToolsDropdownProps) => {
   const localize = useLocalize();
   const isDisabled = disabled ?? false;
   const [isPopoverActive, setIsPopoverActive] = useState(false);
+  const developMode = useRecoilValue(store.developMode);
   const {
     webSearch,
     artifacts,
     fileSearch,
+    improve,
     agentsConfig,
     mcpServerManager,
     codeApiKeyForm,
@@ -56,6 +60,7 @@ const ToolsDropdown = ({ disabled }: ToolsDropdownProps) => {
   } = codeInterpreter;
   const { isPinned: isFileSearchPinned, setIsPinned: setIsFileSearchPinned } = fileSearch;
   const { isPinned: isArtifactsPinned, setIsPinned: setIsArtifactsPinned } = artifacts;
+  const { isPinned: isImprovePinned, setIsPinned: setIsImprovePinned } = improve;
 
   const canUseWebSearch = useHasAccess({
     permissionType: PermissionTypes.WEB_SEARCH,
@@ -98,6 +103,11 @@ const ToolsDropdown = ({ disabled }: ToolsDropdownProps) => {
     fileSearch.debouncedChange({ value: newValue });
   }, [fileSearch]);
 
+  const handleImproveToggle = useCallback(() => {
+    const newValue = !improve.toggleState;
+    improve.debouncedChange({ value: newValue });
+  }, [improve]);
+
   const handleArtifactsToggle = useCallback(() => {
     const currentState = artifacts.toggleState;
     if (!currentState || currentState === '') {
@@ -128,6 +138,36 @@ const ToolsDropdown = ({ disabled }: ToolsDropdownProps) => {
   const mcpPlaceholder = startupConfig?.interface?.mcpServers?.placeholder;
 
   const dropdownItems: MenuItemProps[] = [];
+
+  dropdownItems.push({
+    onClick: handleImproveToggle,
+    hideOnClick: false,
+    render: (props) => (
+      <div {...props}>
+        <div className="flex items-center gap-2">
+          <Wand2 className="icon-md" />
+          <span>{localize('com_ui_improve')}</span>
+        </div>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsImprovePinned(!isImprovePinned);
+          }}
+          className={cn(
+            'rounded p-1 transition-all duration-200',
+            'hover:bg-surface-secondary hover:shadow-sm',
+            !isImprovePinned && 'text-text-secondary hover:text-text-primary',
+          )}
+          aria-label={isImprovePinned ? 'Unpin' : 'Pin'}
+        >
+          <div className="h-4 w-4">
+            <PinIcon unpin={isImprovePinned} />
+          </div>
+        </button>
+      </div>
+    ),
+  });
 
   if (fileSearchEnabled && canUseFileSearch) {
     dropdownItems.push({
@@ -215,7 +255,7 @@ const ToolsDropdown = ({ disabled }: ToolsDropdownProps) => {
     });
   }
 
-  if (canRunCode && codeEnabled) {
+  if (canRunCode && codeEnabled && developMode) {
     dropdownItems.push({
       onClick: handleCodeInterpreterToggle,
       hideOnClick: false,
@@ -269,7 +309,7 @@ const ToolsDropdown = ({ disabled }: ToolsDropdownProps) => {
     });
   }
 
-  if (artifactsEnabled) {
+  if (artifactsEnabled && developMode) {
     dropdownItems.push({
       hideOnClick: false,
       render: (props) => (

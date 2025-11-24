@@ -8,6 +8,7 @@ const {
   createImportLimiters,
   createForkLimiters,
   configMiddleware,
+  resolveOrgId,
 } = require('~/server/middleware');
 const { getConvosByCursor, deleteConvos, getConvo, saveConvo } = require('~/models/Conversation');
 const { forkConversation, duplicateConversation } = require('~/server/utils/import/fork');
@@ -25,6 +26,7 @@ const assistantClients = {
 
 const router = express.Router();
 router.use(requireJwtAuth);
+router.use(resolveOrgId);
 
 router.get('/', async (req, res) => {
   const limit = parseInt(req.query.limit, 10) || 25;
@@ -46,6 +48,7 @@ router.get('/', async (req, res) => {
       tags,
       search,
       order,
+      orgId: req.orgId,
     });
     res.status(200).json(result);
   } catch (error) {
@@ -56,7 +59,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:conversationId', async (req, res) => {
   const { conversationId } = req.params;
-  const convo = await getConvo(req.user.id, conversationId);
+  const convo = await getConvo(req.user.id, conversationId, req.orgId);
 
   if (convo) {
     res.status(200).json(convo);
@@ -124,7 +127,7 @@ router.delete('/', async (req, res) => {
   }
 
   try {
-    const dbResponse = await deleteConvos(req.user.id, filter);
+    const dbResponse = await deleteConvos(req.user.id, filter, req.orgId);
     if (filter.conversationId) {
       await deleteToolCalls(req.user.id, filter.conversationId);
       await deleteConvoSharedLink(req.user.id, filter.conversationId);
@@ -138,7 +141,7 @@ router.delete('/', async (req, res) => {
 
 router.delete('/all', async (req, res) => {
   try {
-    const dbResponse = await deleteConvos(req.user.id, {});
+    const dbResponse = await deleteConvos(req.user.id, {}, req.orgId);
     await deleteToolCalls(req.user.id);
     await deleteAllSharedLinks(req.user.id);
     res.status(201).json(dbResponse);
