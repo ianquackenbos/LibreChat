@@ -12,6 +12,7 @@ import BookmarkMenu from './Menus/BookmarkMenu';
 import { TemporaryChat } from './TemporaryChat';
 import AddMultiConvo from './AddMultiConvo';
 import { useHasAccess } from '~/hooks';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const defaultInterface = getConfigDefaults().interface;
 
@@ -39,6 +40,7 @@ export default function Header() {
   return (
     <div className="sticky top-0 z-10 flex h-14 w-full items-center justify-between bg-white p-2 font-semibold text-text-primary dark:bg-gray-800">
       <div className="hide-scrollbar flex w-full items-center justify-between gap-2 overflow-x-auto">
+<<<<<<< HEAD
         <div className="mx-1 flex items-center gap-2">
           <div
             className={`flex items-center gap-2 ${
@@ -58,6 +60,26 @@ export default function Header() {
             } ${!navVisible ? 'translate-x-0' : 'translate-x-[-100px]'}`}
           >
             <OrganizationSelector />
+=======
+        <div className="mx-1 flex items-center">
+          <AnimatePresence initial={false}>
+            {!navVisible && (
+              <motion.div
+                className={`flex items-center gap-2`}
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: 'auto', opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                key="header-buttons"
+              >
+                <OpenSidebar setNavVisible={setNavVisible} className="max-md:hidden" />
+                <HeaderNewChat />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className={navVisible ? 'flex items-center gap-2' : 'ml-2 flex items-center gap-2'}>
+>>>>>>> upstream/main
             <ModelSelector startupConfig={startupConfig} />
             {interfaceConfig.presets === true && interfaceConfig.modelSelect && <PresetsMenu />}
             {hasAccessToBookmarks === true && <BookmarkMenu />}
